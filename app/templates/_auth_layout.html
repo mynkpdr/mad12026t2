@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import icon %}
+{% block body %}
+<div class="auth">
+  <section class="auth-hero">
+    <a class="brand" href="{{ url_for('auth.home') }}"><span class="brand-mark"><svg aria-hidden="true"><use href="#logo"/></svg></span><span class="brand-name">Examination<small>Management Portal</small></span></a>
+    <div>
+      <h1>Examinations,<br><em>beautifully</em> orchestrated.</h1>
+      <p>Schedule vivas, open booking windows, let students pick their slot, and evaluate with clear rubrics, all in one calm place.</p>
+      {# A little timetable: orange cells are booked slots #}
+      <div class="timetable" aria-hidden="true">
+        {% for cls in ['on','','half','','on', '','half','on','','', 'half','','','on','half', 'on','','half','','', '','on','','half','on'] %}<span class="{{ cls }}"></span>{% endfor %}
+      </div>
+    </div>
+    <div class="facts"><div><b>3</b>roles</div><div><b>0</b>double bookings</div><div><b>1</b>source of truth</div></div>
+  </section>
+  <section class="auth-form">
+    <button class="icon-btn auth-theme" type="button" data-theme-toggle aria-label="Switch light or dark theme">{{ icon('moon', 'i-moon') }}{{ icon('sun', 'i-sun') }}</button>
+    <div class="auth-card reveal">{% block card %}{% endblock %}</div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% from '_macros.html' import csrf, icon, avatar %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Examination Portal{% endblock %} · EMP</title>
+  <meta name="description" content="Examination Management Portal: schedule vivas and practicals, book exam slots and publish rubric-based results.">
+  <meta name="theme-color" content="#f4eee2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" sizes="32x32">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}">
+  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=IBM+Plex+Mono:wght@400;500&family=Schibsted+Grotesk:wght@400..700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+{% include '_icons.html' %}
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="toast-stack" aria-live="polite">
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="flash flash-{{ category }} alert alert-dismissible fade show" role="alert">
+      {{ icon({'success': 'check', 'danger': 'x', 'warning': 'flag'}.get(category, 'spark')) }}<div>{{ message }}</div>
+      <button class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endfor %}
+</div>
+
+{% block body %}
+{# Sidebar links per role: (endpoint, label, icon, endpoint prefixes that also mark it active) #}
+{% set nav = {
+  'admin': [('Overview', [('admin.dashboard', 'Dashboard', 'grid', ())]),
+            ('Academics', [('admin.courses', 'Courses', 'book', ('admin.course',)), ('admin.exams', 'Examinations', 'exam', ('admin.exam_', 'admin.rubric'))]),
+            ('People', [('admin.examiners', 'Examiners', 'users', ('admin.examiner',)), ('admin.students', 'Students', 'cap', ('admin.student',))]),
+            ('Operations', [('admin.slots', 'Slots', 'clock', ('admin.slot',)), ('admin.bookings', 'Bookings', 'ticket', ('admin.booking', 'admin.reschedule'))])],
+  'examiner': [('Overview', [('examiner.dashboard', 'Dashboard', 'grid', ())]),
+               ('My work', [('examiner.exams', 'Assigned exams', 'exam', ()), ('examiner.slots', 'My slots', 'clock', ('examiner.slot', 'examiner.evaluate'))])],
+  'student': [('Overview', [('student.dashboard', 'Dashboard', 'grid', ())]),
+              ('Exams', [('student.exams', 'Find exams', 'search', ('student.exam_',)), ('student.bookings', 'My bookings', 'ticket', ()), ('student.results', 'Results', 'award', ('student.scorecard',))])]
+} %}
+<aside class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar" aria-label="Main navigation">
+  <div class="sidebar-panel">
+    <a class="brand" href="{{ url_for('auth.home') }}"><span class="brand-mark"><svg aria-hidden="true"><use href="#logo"/></svg></span><span class="brand-name sb-text">Examination<small>Management Portal</small></span></a>
+    <nav>
+      {% if current_user.is_authenticated and (current_user.role != 'examiner' or current_user.approved) %}
+        {% for section, links in nav[current_user.role] %}
+          <div class="nav-section"><span class="sb-text">{{ section }}</span></div>
+          {% for endpoint, label, icon_name, prefixes in links %}
+            {% set active = request.endpoint == endpoint or (prefixes and request.endpoint and request.endpoint.startswith(prefixes)) %}
+            <a class="side-link {{ 'active' if active }}" href="{{ url_for(endpoint) }}" {{ 'aria-current=page' if active }}>{{ icon(icon_name) }}<span class="sb-text">{{ label }}</span></a>
+          {% endfor %}
+        {% endfor %}
+      {% elif not current_user.is_authenticated %}
+        <a class="side-link" href="{{ url_for('auth.login') }}">{{ icon('lock') }}<span class="sb-text">Log in</span></a>
+      {% endif %}
+    </nav>
+    {% if current_user.is_authenticated %}
+    <div class="side-foot">
+      <a href="{{ url_for('auth.profile') }}" data-tip="My profile">{{ avatar(current_user.name) }}</a>
+      <div class="who sb-text"><b>{{ current_user.name }}</b><span>{{ current_user.role }}</span></div>
+      <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="icon-btn" data-tip="Log out" aria-label="Log out">{{ icon('logout') }}</button></form>
+    </div>
+    {% endif %}
+  </div>
+</aside>
+
+<div class="app-main">
+  <header class="topbar">
+    <button class="icon-btn d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Open menu">{{ icon('menu') }}</button>
+    <button class="icon-btn d-none d-lg-inline-grid" type="button" data-sidebar-toggle aria-controls="sidebar" aria-expanded="true" data-tip="Collapse / expand menu" aria-label="Collapse or expand the menu">{{ icon('menu') }}</button>
+    <div class="crumb">{% if current_user.is_authenticated %}<span class="text-capitalize">{{ current_user.role }}</span> / {% endif %}<b>{{ self.title() }}</b></div>
+    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+      <form class="top-search" action="{{ url_for('admin.global_search') }}" role="search">
+        {{ icon('search') }}<input class="form-control form-control-sm" name="q" placeholder="Search people, exams, bookings" aria-label="Search everything"
+          value="{{ request.args.get('q', '') if request.endpoint == 'admin.global_search' }}">
+      </form>
+    {% else %}<span class="ms-auto"></span>{% endif %}
+    <button class="icon-btn" type="button" data-theme-toggle data-tip="Switch light / dark" aria-label="Switch light or dark theme">{{ icon('moon', 'i-moon') }}{{ icon('sun', 'i-sun') }}</button>
+  </header>
+  <main id="main" class="page reveal">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="foot">Examination Management Portal · Flask, SQLite &amp; Bootstrap</footer>
+</div>
+{% endblock %}
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

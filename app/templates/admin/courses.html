@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import post_button, badge, page_header, icon, empty %}
+{% block title %}Courses{% endblock %}
+{% block content %}
+{% call page_header('Academics', 'Courses', 'Every examination belongs to a course. Inactive courses stay in history but cannot get new exams.') %}
+  <a class="btn btn-accent" href="{{ url_for('admin.course_form') }}">{{ icon('plus') }} New course</a>
+{% endcall %}
+<div class="row g-3 stagger">
+  {% for c in courses %}
+  <div class="col-md-6 col-xl-4">
+    <div class="panel h-100 d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <span class="mono pill pill-accent"><i></i>{{ c.code }}</span>{{ badge('Active' if c.active else 'Deactivated') }}
+      </div>
+      <h2 class="h5 mb-1">{{ c.name }}</h2>
+      <p class="text-body-secondary small flex-grow-1">{{ c.description or 'No description yet.' }}</p>
+      <div class="d-flex justify-content-between align-items-center pt-2" style="border-top: 1px solid var(--line-2)">
+        <span class="small text-body-secondary">{{ icon('exam') }} {{ c.exams|length }} examination{{ '' if c.exams|length == 1 else 's' }}</span>
+        <span>
+          <a class="btn btn-sm btn-ghost" href="{{ url_for('admin.course_form', id=c.id) }}" data-tip="Edit course" aria-label="Edit {{ c.code }}">{{ icon('edit') }}</a>
+          {{ post_button(url_for('admin.course_delete', id=c.id), '', 'ghost-danger', 'Delete this course?', 'trash', 'Delete course') }}
+        </span>
+      </div>
+    </div>
+  </div>
+  {% else %}<div class="col-12"><div class="panel">{{ empty('book', 'No courses yet', 'Create the first course to start adding examinations.') }}</div></div>{% endfor %}
+</div>
+{% endblock %}

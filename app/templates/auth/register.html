@@ -1,0 +1,25 @@
+{% extends '_auth_layout.html' %}
+{% from '_macros.html' import csrf, field, icon %}
+{% block title %}Register{% endblock %}
+{% block card %}
+<div class="eyebrow">Join the portal</div>
+<h2>Create your account</h2>
+<p class="lead-sm">Students can start booking right away. Examiners get access once the admin approves them.</p>
+<form method="post">{{ csrf() }}
+  <div class="segmented mb-3" role="radiogroup" aria-label="Account type">
+    <input type="radio" name="role" value="student" id="role-student" checked>
+    <label for="role-student">{{ icon('cap') }}<span><b>Student</b><span>Book exam slots</span></span></label>
+    <input type="radio" name="role" value="examiner" id="role-examiner">
+    <label for="role-examiner">{{ icon('users') }}<span><b>Examiner</b><span>Needs approval</span></span></label>
+  </div>
+  {{ field('Full name', 'name', extra='autocomplete="name"') }}
+  {{ field('Email address', 'email', type='email', extra='autocomplete="email"') }}
+  {{ field('Password', 'password', type='password', extra='minlength="8" autocomplete="new-password"', help='At least 8 characters.') }}
+  <div class="row g-2">
+    <div class="col-sm-7">{{ field('Department', 'department', required=False, help='Required for examiners.') }}</div>
+    <div class="col-sm-5">{{ field('Phone', 'phone', type='tel', required=False) }}</div>
+  </div>
+  <button class="btn btn-accent w-100 py-2">Create account {{ icon('arrow') }}</button>
+</form>
+<p class="mt-4 mb-0 text-center text-body-secondary">Already registered? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+{% endblock %}

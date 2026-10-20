@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import page_header, icon, empty %}
+{% block title %}Results{% endblock %}
+{% block content %}
+{{ page_header('Exams', 'Results & feedback', 'Results appear here once the admin publishes them. Download a PDF scorecard for your records.') }}
+<div class="row g-4 stagger">
+  {% for b in bookings %}
+  <div class="col-xl-6"><div class="panel h-100">
+    <div class="d-flex gap-4 align-items-center flex-wrap">
+      <div class="ring" style="--p: {{ (b.marks / b.exam.max_marks * 100)|round }}"><b>{{ b.marks|num }}<small>of {{ b.exam.max_marks }}</small></b></div>
+      <div class="flex-grow-1">
+        <div class="eyebrow">{{ b.exam.course.code }} · {{ b.exam.exam_type }}</div>
+        <h2 class="h4 mb-1">{{ b.exam.name }}</h2>
+        <div class="small text-body-secondary">Evaluated by {{ b.slot.examiner.name }} on {{ b.evaluated_at.strftime('%d %b %Y') }}</div>
+      </div>
+    </div>
+    <hr>
+    {% for s in b.scores %}
+      <div class="bar-row" data-tip="{{ s.rubric.name }}: weight {{ s.rubric.weightage }}">
+        <span>{{ s.rubric.name }}</span><span class="mono">{{ s.score|num }} / {{ s.rubric.max_marks }}</span>
+        <div class="track"><div style="--w: {{ (s.score / s.rubric.max_marks * 100)|round }}%"></div></div>
+      </div>
+    {% endfor %}
+    <blockquote class="mt-3 mb-3 ps-3" style="border-left: 3px solid var(--accent); font-family: var(--font-display); font-style: italic; font-size: 1.05rem">“{{ b.remarks or 'No remarks.' }}”</blockquote>
+    <a class="btn btn-sm btn-primary" href="{{ url_for('student.scorecard_pdf', id=b.id) }}">{{ icon('download') }} Download scorecard</a>
+  </div></div>
+  {% else %}<div class="col-12"><div class="panel">{{ empty('award', 'No results yet', 'They appear here once the admin publishes them.') }}</div></div>{% endfor %}
+</div>
+{% endblock %}

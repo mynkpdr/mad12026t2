@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import post_button, badge, page_header, icon, empty, stub, hours %}
+{% block title %}My bookings{% endblock %}
+{% block content %}
+{% call page_header('Exams', 'My bookings', 'Every booking you have made, including cancelled ones. Cancel any time before the booking window closes.') %}
+  <a class="btn btn-accent" href="{{ url_for('student.exams', open=1) }}">{{ icon('plus') }} Book another</a>
+{% endcall %}
+<div class="row g-3 stagger">
+  {% for b in bookings %}
+  <div class="col-md-6 col-xxl-4">
+    <div class="ticket {{ 'is-muted' if b.status == 'cancelled' }}">
+      {{ stub(b.slot.date) }}
+      <div class="ticket-body">
+        <div class="d-flex justify-content-between gap-2"><h3>{{ b.exam.name }}</h3>{{ badge(b.status|capitalize) }}</div>
+        <div class="ticket-meta"><span>{{ icon('clock') }} {{ hours(b.slot) }}</span><span>{{ icon('user') }} {{ b.slot.examiner.name }}</span></div>
+        {% if b.note %}<div class="small" style="color: var(--gold)">{{ icon('swap') }} {{ b.note }}</div>{% endif %}
+        <div class="ticket-foot">
+          <span class="small text-body-secondary mono">#{{ b.id }} · booked {{ b.created_at.strftime('%d %b') }}</span>
+          {% if b.status == 'booked' and b.exam.booking_open %}{{ post_button(url_for('student.cancel', id=b.id), 'Cancel', 'ghost-danger', 'Cancel this booking?', 'x') }}
+          {% elif b.status == 'booked' %}<span class="small text-body-secondary" data-tip="Booking window closed on {{ b.exam.booking_end.strftime('%d %b') }}">{{ icon('lock') }} Locked</span>
+          {% elif b.result_visible %}<a class="btn btn-sm btn-ghost" href="{{ url_for('student.results') }}">{{ icon('award') }} Result</a>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}<div class="col-12"><div class="panel">{{ empty('ticket', 'No bookings yet', 'Find an exam that is open for booking and pick a slot.') }}</div></div>{% endfor %}
+</div>
+{% endblock %}

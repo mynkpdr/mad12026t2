@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, badge, search_bar, page_header, person, icon, empty, slot_time, pager %}
+{% block title %}Bookings{% endblock %}
+{% block content %}
+{{ page_header('Operations', 'All bookings', 'Full history, including cancellations. Move an active booking to any free slot of the same exam.') }}
+{{ search_bar(q, 'Search by student, exam or booking ID') }}
+<div class="table-wrap">
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>Student</th><th>Exam & slot</th><th>Status</th><th>Marks</th><th>Reschedule</th></tr></thead>
+  <tbody>
+  {% for b in bookings.items %}
+  <tr>
+    <td class="cell-id">#{{ b.id }}</td><td>{{ person(b.student.name, b.student.email) }}</td>
+    <td><div class="cell-main">{{ b.exam.name }}</div><div class="cell-sub">{{ slot_time(b.slot) }} · {{ b.slot.examiner.name }}</div>
+        {% if b.note %}<div class="cell-sub" style="color: var(--gold)">{{ icon('swap') }} {{ b.note }}</div>{% endif %}</td>
+    <td>{{ badge(b.status|capitalize) }}</td>
+    <td class="mono">{{ b.marks|num if b.marks is not none else '—' }}</td>
+    <td>
+      {% if b.status == 'booked' %}
+      <form method="post" action="{{ url_for('admin.reschedule', id=b.id) }}" class="d-flex gap-1" style="min-width: 240px">{{ csrf() }}
+        <select class="form-select form-select-sm" name="slot_id" aria-label="Move booking {{ b.id }} to slot">
+          {% for s in b.exam.slots if not s.cancelled and s.id != b.slot_id and s.available_seats > 0 and s.date >= today() %}
+            <option value="{{ s.id }}">{{ slot_time(s) }} · {{ s.examiner.name }}</option>
+          {% else %}<option disabled selected>No free slot</option>{% endfor %}
+        </select><button class="btn btn-sm btn-ghost" data-tip="Move booking" aria-label="Move booking">{{ icon('swap') }}</button>
+      </form>{% else %}<span class="text-body-secondary small">—</span>{% endif %}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="6">{{ empty('ticket', 'No bookings found') }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(bookings, request) }}
+{% endblock %}

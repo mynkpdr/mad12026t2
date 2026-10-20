@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, post_button, badge, search_bar, page_header, person, icon, empty, pager %}
+{% block title %}Examiners{% endblock %}
+{% block content %}
+{% call page_header('People', 'Examiners', 'Approve new registrations, switch accounts on or off, or add an examiner directly.') %}
+  <a class="btn btn-accent" href="#add">{{ icon('plus') }} Add examiner</a>
+{% endcall %}
+{{ search_bar(q, 'Search by name, email or ID') }}
+<div class="table-wrap mb-4">
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>Examiner</th><th>Department</th><th>Phone</th><th>Exams</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users.items %}
+  <tr>
+    <td class="cell-id">#{{ u.id }}</td><td>{{ person(u.name, u.email) }}</td><td>{{ u.department or '—' }}</td><td class="mono small">{{ u.phone or '—' }}</td>
+    <td>{{ u.assigned_exams|length }}</td>
+    <td>{% if not u.approved %}{{ badge('Pending') }}{% elif u.active %}{{ badge('Approved') }}{% else %}{{ badge('Deactivated') }}{% endif %}</td>
+    <td class="text-end text-nowrap">
+      {% if not u.approved %}{{ post_button(url_for('admin.approve', id=u.id), 'Approve', 'ghost-success', icon_name='check') }}{% endif %}
+      {{ post_button(url_for('admin.toggle_active', id=u.id), 'Activate' if not u.active else 'Deactivate', 'ghost' if u.active else 'ghost-success') }}
+    </td>
+  </tr>
+  {% else %}<tr><td colspan="7">{{ empty('users', 'No examiners found') }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(users, request) }}
+<div class="panel" id="add">
+  <div class="panel-title"><h2>Add an examiner</h2><span class="hint">Approved immediately</span></div>
+  <form method="post" action="{{ url_for('admin.examiner_add') }}" class="row g-2">{{ csrf() }}
+    <div class="col-md-6 col-xl-3"><input class="form-control" name="name" placeholder="Full name" required aria-label="Full name"></div>
+    <div class="col-md-6 col-xl-3"><input class="form-control" name="email" type="email" placeholder="Email" required aria-label="Email"></div>
+    <div class="col-md-4 col-xl-2"><input class="form-control" name="department" placeholder="Department" required aria-label="Department"></div>
+    <div class="col-md-4 col-xl-2"><input class="form-control" name="phone" type="tel" placeholder="Phone" aria-label="Phone"></div>
+    <div class="col-md-4 col-xl-2"><input class="form-control" name="password" type="password" minlength="8" placeholder="Password" required aria-label="Password"></div>
+    <div class="col-12"><button class="btn btn-primary">{{ icon('plus') }} Add examiner</button></div>
+  </form>
+</div>
+{% endblock %}

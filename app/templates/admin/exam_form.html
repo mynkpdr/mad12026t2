@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, field, page_header, icon %}
+{% block title %}{{ 'Edit' if exam else 'New' }} examination{% endblock %}
+{% block content %}
+{% call page_header('Academics', ('Edit ' ~ exam.name) if exam else 'New examination', 'Set the basics and the two windows: when examiners add slots, and when students book them.') %}
+  <a class="btn btn-ghost" href="{{ url_for('admin.exam_detail', id=exam.id) if exam else url_for('admin.exams') }}">{{ icon('back') }} Back</a>
+{% endcall %}
+{% if not courses %}<div class="panel mb-3">Create an active course first. <a href="{{ url_for('admin.course_form') }}">New course</a></div>{% endif %}
+<form method="post" class="panel" style="max-width: 880px">{{ csrf() }}
+  <div class="form-section">Basics</div>
+  <div class="row g-3">
+    <div class="col-md-6 mb-3"><label class="form-label" for="course_id">Course</label>
+      <select class="form-select" id="course_id" name="course_id" required>
+        {% for c in courses %}<option value="{{ c.id }}" {{ 'selected' if exam and exam.course_id == c.id }}>{{ c.code }} · {{ c.name }}</option>{% endfor %}
+      </select></div>
+    <div class="col-md-6 mb-3"><label class="form-label" for="exam_type">Type</label>
+      <select class="form-select" id="exam_type" name="exam_type">
+        {% for t in types %}<option {{ 'selected' if exam and exam.exam_type == t }}>{{ t }}</option>{% endfor %}
+      </select></div>
+  </div>
+  {{ field('Examination name', 'name', exam.name if exam, extra='placeholder="Programming Viva - Term 1"') }}
+  <div class="mb-3"><label class="form-label" for="description">Description</label><textarea class="form-control" id="description" name="description" rows="2">{{ exam.description if exam }}</textarea></div>
+  <div class="row g-3">
+    <div class="col-md-6">{{ field('Duration (minutes)', 'duration_minutes', exam.duration_minutes if exam, 'number', extra='min="1"', help='Every slot must be at least this long.') }}</div>
+    <div class="col-md-6">{{ field('Maximum marks', 'max_marks', exam.max_marks if exam, 'number', extra='min="1"') }}</div>
+  </div>
+  <div class="form-section mt-2">Windows</div>
+  <div class="row g-3">
+    <div class="col-md-6">{{ field('Slot creation starts', 'slot_start', exam.slot_start if exam, 'date') }}</div>
+    <div class="col-md-6">{{ field('Slot creation ends', 'slot_end', exam.slot_end if exam, 'date') }}</div>
+    <div class="col-md-6">{{ field('Booking starts', 'booking_start', exam.booking_start if exam, 'date') }}</div>
+    <div class="col-md-6">{{ field('Booking ends (also the cancel deadline)', 'booking_end', exam.booking_end if exam, 'date') }}</div>
+  </div>
+  <button class="btn btn-primary">{{ icon('check') }} Save examination</button>
+</form>
+{% endblock %}

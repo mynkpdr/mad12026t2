@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import badge, page_header, person, icon, empty, slot_time, meter %}
+{% block title %}Slot students{% endblock %}
+{% block content %}
+{% call page_header(slot_time(slot), slot.exam.name, 'Students booked into this slot. Evaluate each one with the exam rubric.') %}
+  {{ meter(slot) }}
+  <a class="btn btn-ghost" href="{{ url_for('examiner.slots') }}">{{ icon('back') }} My slots</a>
+{% endcall %}
+<div class="table-wrap">
+<table class="table table-hover">
+  <thead><tr><th>Student</th><th>Booked on</th><th>Status</th><th>Marks</th><th></th></tr></thead>
+  <tbody>
+  {% for b in slot.bookings if b.status != 'cancelled' %}
+  <tr><td>{{ person(b.student.name, b.student.email) }}</td><td class="small">{{ b.created_at.strftime('%d %b %Y') }}</td>
+      <td>{{ badge(b.status|capitalize) }}</td>
+      <td class="mono">{{ b.marks|num ~ ' / ' ~ slot.exam.max_marks if b.marks is not none else '—' }}</td>
+      <td class="text-end"><a class="btn btn-sm {{ 'btn-ghost' if b.status == 'completed' else 'btn-primary' }}" href="{{ url_for('examiner.evaluate', id=b.id) }}">{{ 'Review marks' if b.status == 'completed' else 'Evaluate' }} {{ icon('arrow') }}</a></td></tr>
+  {% else %}<tr><td colspan="5">{{ empty('users', 'No students booked yet') }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

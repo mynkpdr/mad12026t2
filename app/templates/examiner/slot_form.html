@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, field, page_header, icon %}
+{% block title %}{{ 'Edit' if slot else 'New' }} slot{% endblock %}
+{% block content %}
+{% call page_header(exam.name, 'Edit slot' if slot else 'New slot', 'Each slot must be at least ' ~ exam.duration_minutes ~ ' minutes and must not overlap your other slots.') %}
+  <a class="btn btn-ghost" href="{{ url_for('examiner.slots') }}">{{ icon('back') }} My slots</a>
+{% endcall %}
+<form method="post" class="panel" style="max-width: 640px">{{ csrf() }}
+  {{ field('Date', 'date', slot.date if slot, 'date') }}
+  <div class="row g-3">
+    <div class="col-6">{{ field('Starts', 'start_time', slot.start_time.strftime('%H:%M') if slot, 'time') }}</div>
+    <div class="col-6">{{ field('Ends', 'end_time', slot.end_time.strftime('%H:%M') if slot, 'time') }}</div>
+  </div>
+  {{ field('Maximum students', 'capacity', slot.capacity if slot else 1, 'number', extra='min="1"', help='The slot closes automatically when it is full.') }}
+  <button class="btn btn-primary">{{ icon('check') }} Save slot</button>
+</form>
+{% endblock %}

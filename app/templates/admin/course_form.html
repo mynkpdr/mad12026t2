@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, field, page_header, icon %}
+{% block title %}{{ 'Edit' if course else 'New' }} course{% endblock %}
+{% block content %}
+{% call page_header('Academics', ('Edit ' ~ course.code) if course else 'New course', 'Codes are unique, for example CS101.') %}
+  <a class="btn btn-ghost" href="{{ url_for('admin.courses') }}">{{ icon('back') }} All courses</a>
+{% endcall %}
+<form method="post" class="panel" style="max-width: 720px">{{ csrf() }}
+  <div class="row g-3">
+    <div class="col-md-4">{{ field('Course code', 'code', course.code if course, extra='placeholder="CS101" style="text-transform:uppercase"') }}</div>
+    <div class="col-md-8">{{ field('Course name', 'name', course.name if course, extra='placeholder="Introduction to Programming"') }}</div>
+  </div>
+  <div class="mb-3"><label class="form-label" for="description">Description</label><textarea class="form-control" id="description" name="description" rows="3">{{ course.description if course }}</textarea></div>
+  <div class="form-check form-switch mb-4"><input class="form-check-input" type="checkbox" role="switch" name="active" id="active" {{ 'checked' if not course or course.active }}><label class="form-check-label" for="active">Active (can receive new examinations)</label></div>
+  <button class="btn btn-primary">{{ icon('check') }} Save course</button>
+</form>
+{% endblock %}

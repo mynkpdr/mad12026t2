@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import badge, page_header, icon, empty %}
+{% block title %}Find exams{% endblock %}
+{% block content %}
+{{ page_header('Exams', 'Find an examination', 'Search, filter, then open an exam to pick a slot. Filters stay in the link, so you can bookmark or share it.') }}
+<form class="filter-bar" method="get" role="search">
+  <div class="search">{{ icon('search') }}<input class="form-control" name="q" value="{{ q }}" placeholder="Exam or course name" aria-label="Search exams"></div>
+  <select class="form-select" name="type" aria-label="Type"><option value="">All types</option>
+    {% for t in types %}<option {{ 'selected' if request.args.get('type') == t }}>{{ t }}</option>{% endfor %}</select>
+  <select class="form-select" name="course" aria-label="Course"><option value="">All courses</option>
+    {% for c in courses %}<option value="{{ c.id }}" {{ 'selected' if course_id == c.id }}>{{ c.code }}</option>{% endfor %}</select>
+  <span class="chip-check"><input type="checkbox" name="open" value="1" id="open" {{ 'checked' if request.args.get('open') }}><label for="open">{{ icon('check') }} Booking open</label></span>
+  <button class="btn btn-primary">Apply</button>
+  {% if request.args %}<a class="btn btn-link" href="{{ url_for('student.exams') }}">Reset</a>{% endif %}
+</form>
+<div class="row g-3 stagger">
+  {% for e in exams %}
+  <div class="col-md-6 col-xxl-4">
+    <a class="ticket text-decoration-none {{ 'is-muted' if e.status in ('Completed', 'Closed') }}" style="color: inherit" href="{{ url_for('student.exam_detail', id=e.id) }}">
+      <div class="ticket-stub"><span class="mon">Book by</span><span class="day">{{ e.booking_end.strftime('%d') }}</span><span class="mon">{{ e.booking_end.strftime('%b') }}</span></div>
+      <div class="ticket-body">
+        <div class="d-flex justify-content-between gap-2"><span class="eyebrow mb-0">{{ e.course.code }}</span>{{ badge(e.status) }}</div>
+        <h3>{{ e.name }}</h3>
+        <div class="ticket-meta"><span>{{ icon('exam') }} {{ e.exam_type }}</span><span>{{ icon('clock') }} {{ e.duration_minutes }} min</span><span>{{ icon('award') }} {{ e.max_marks }}</span></div>
+        <div class="ticket-foot"><span class="small text-body-secondary">{{ e.slots|rejectattr('cancelled')|list|length }} slots</span><span class="small fw-semibold" style="color: var(--accent)">View slots {{ icon('arrow') }}</span></div>
+      </div>
+    </a>
+  </div>
+  {% else %}<div class="col-12"><div class="panel">{{ empty('search', 'No examinations match', 'Try removing a filter.') }}</div></div>{% endfor %}
+</div>
+{% endblock %}

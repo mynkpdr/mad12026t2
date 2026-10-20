@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import badge, search_bar, page_header, icon, empty, pager %}
+{% block title %}Examinations{% endblock %}
+{% block content %}
+{% call page_header('Academics', 'Examinations', 'Open one to manage its rubric, examiners, slot creation, booking and results.') %}
+  <a class="btn btn-accent" href="{{ url_for('admin.exam_form') }}">{{ icon('plus') }} New examination</a>
+{% endcall %}
+{{ search_bar(q, 'Search by exam name, course or ID') }}
+<div class="table-wrap">
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>Examination</th><th>Type</th><th>Booking window</th><th>Status</th><th>Results</th><th></th></tr></thead>
+  <tbody>
+  {% for e in exams.items %}
+  <tr>
+    <td class="cell-id">#{{ e.id }}</td>
+    <td><div class="cell-main">{{ e.name }}</div><div class="cell-sub">{{ e.course.code }} · {{ e.duration_minutes }} min · {{ e.max_marks }} marks</div></td>
+    <td>{{ e.exam_type }}</td>
+    <td class="mono small">{{ e.booking_start.strftime('%d %b') }} → {{ e.booking_end.strftime('%d %b') }}</td>
+    <td>{{ badge(e.status) }}</td><td>{{ badge('Published' if e.results_published else 'Hidden') }}</td>
+    <td class="text-end"><a class="btn btn-sm btn-ghost" href="{{ url_for('admin.exam_detail', id=e.id) }}">Manage {{ icon('arrow') }}</a></td>
+  </tr>
+  {% else %}<tr><td colspan="7">{{ empty('exam', 'No examinations found', 'Try another search, or create one.') }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(exams, request) }}
+{% endblock %}

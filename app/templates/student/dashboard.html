@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import stat, badge, page_header, icon, empty, stub, hours %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% call page_header('Student desk', greeting() ~ ', <em>' ~ current_user.name ~ '</em>.',
+     (upcoming|length ~ ' upcoming exam' ~ ('' if upcoming|length == 1 else 's')) ~ ' · ' ~ (open_exams|length) ~ ' open for booking.') %}
+  <a class="btn btn-accent" href="{{ url_for('student.exams', open=1) }}">{{ icon('search') }} Find a slot</a>
+{% endcall %}
+<div class="row g-3 mb-4 stagger">
+  {{ stat('Open for booking', open_exams|length, url_for('student.exams', open=1), 'exam', 'accent') }}
+  {{ stat('Free seats', open_slots, None, 'clock', 'forest') }}
+  {{ stat('Upcoming', booked_count, url_for('student.bookings'), 'calendar', 'sky') }}
+  {{ stat('Results', results|length, url_for('student.results'), 'award', 'gold') }}
+</div>
+<div class="row g-4">
+  <div class="col-xl-7"><div class="panel h-100">
+    <div class="panel-title"><h2>Your upcoming exams</h2><a class="small" href="{{ url_for('student.bookings') }}">Full history</a></div>
+    <div class="d-grid gap-3">
+    {% for b in upcoming %}
+      <div class="ticket">
+        {{ stub(b.slot.date) }}
+        <div class="ticket-body">
+          <div class="d-flex justify-content-between gap-2"><h3>{{ b.exam.name }}</h3>{{ badge('Booked') }}</div>
+          <div class="ticket-meta"><span>{{ icon('clock') }} {{ hours(b.slot) }}</span><span>{{ icon('user') }} {{ b.slot.examiner.name }}</span><span>{{ icon('exam') }} {{ b.exam.exam_type }}</span></div>
+        </div>
+      </div>
+    {% else %}{{ empty('calendar', 'Nothing booked yet', 'Pick a slot from an exam that is open for booking.') }}{% endfor %}
+    </div>
+  </div></div>
+  <div class="col-xl-5"><div class="panel h-100">
+    <div class="panel-title"><h2>Open for booking</h2></div>
+    {% for e in open_exams %}
+      <div class="list-row">
+        <div class="grow"><div class="cell-main">{{ e.name }}</div><div class="cell-sub">{{ e.course.code }} · book by {{ e.booking_end.strftime('%d %b') }}</div></div>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('student.exam_detail', id=e.id) }}">Slots {{ icon('arrow') }}</a>
+      </div>
+    {% else %}{{ empty('inbox', 'Nothing open right now', 'Check back when a booking window opens.') }}{% endfor %}
+    {% if results %}
+      <div class="panel-title mt-4"><h2>Latest result</h2></div>
+      {% set r = results[0] %}
+      <a class="list-row text-decoration-none" style="color: inherit" href="{{ url_for('student.results') }}">
+        <div class="ring" style="--p: {{ (r.marks / r.exam.max_marks * 100)|round }}; width: 64px"><b style="font-size: 1rem">{{ r.marks|round|int }}</b></div>
+        <div class="grow"><div class="cell-main">{{ r.exam.name }}</div><div class="cell-sub">{{ r.marks|num }} of {{ r.exam.max_marks }} · see feedback</div></div>
+      </a>
+    {% endif %}
+  </div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro icon(name, cls='') %}<svg class="ico {{ cls }}" aria-hidden="true"><use href="#i-{{ name }}"/></svg>{% endmacro %}
+
+{# A POST button, e.g. approve / cancel / delete. `confirm` asks "are you sure?" first. #}
+{% macro post_button(url, label, style='ghost', confirm=None, icon_name=None, tip=None) %}
+<form method="post" action="{{ url }}" class="d-inline" {% if confirm %}onsubmit="return confirm('{{ confirm }}')"{% endif %}>
+  {{ csrf() }}<button class="btn btn-sm btn-{{ style }}" {% if tip %}data-tip="{{ tip }}" aria-label="{{ tip }}"{% endif %}>{% if icon_name %}{{ icon(icon_name) }}{% endif %}{{ label }}</button>
+</form>
+{% endmacro %}
+
+{% macro field(label, name, value='', type='text', required=True, extra='', help=None) %}
+<div class="mb-3">
+  <label class="form-label" for="{{ name }}">{{ label }}</label>
+  <input class="form-control" id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value if value is not none }}"
+         {{ 'required' if required }} {{ extra|safe }}>
+  {% if help %}<div class="form-text">{{ help }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{# Status pill. The tooltip explains what each status means. #}
+{% macro badge(text) %}
+{% set styles = {
+  'Booking Open': ('success live', 'Students can book slots now'), 'Available': ('success', 'Seats are free'),
+  'Booked': ('info', 'Seat reserved, waiting for the exam'), 'Slot Creation': ('accent live', 'Examiners are adding slots'),
+  'Draft': ('neutral', 'Not open yet: slot creation starts later'), 'Closed': ('warning', 'No slot creation or booking right now'),
+  'Full': ('warning', 'No seats left'), 'Completed': ('ink', 'Finished and evaluated'), 'Cancelled': ('danger', 'No longer active'),
+  'Pending': ('warning', 'Waiting for admin approval'), 'Active': ('success', 'Can log in'), 'Deactivated': ('danger', 'Cannot log in'),
+  'Approved': ('success', 'Approved and active'), 'Published': ('success', 'Students can see results'),
+  'Hidden': ('neutral', 'Results not yet visible to students')} %}
+{% set style, tip = styles.get(text, ('neutral', text)) %}
+<span class="pill pill-{{ style.split()[0] }} {{ 'pill-live' if 'live' in style }}" data-tip="{{ tip }}"><i></i>{{ text }}</span>
+{% endmacro %}
+
+{% macro search_bar(q, placeholder='Search by name or ID') %}
+<form class="filter-bar" method="get" role="search">
+  <div class="search">{{ icon('search') }}<input class="form-control" name="q" value="{{ q }}" placeholder="{{ placeholder }}" aria-label="{{ placeholder }}"></div>
+  <button class="btn btn-primary">Search</button>
+  {% if q %}<a class="btn btn-link" href="?">Clear</a>{% endif %}
+</form>
+{% endmacro %}
+
+{% macro stat(label, value, link=None, icon_name='grid', tone='accent', note=None) %}
+{% set inner %}
+  <div class="stat-label">{{ label }} {{ icon(icon_name) }}</div>
+  <div class="stat-value">{{ value }}</div>
+  {% if note %}<div class="stat-note">{{ note }}</div>{% endif %}
+{% endset %}
+<div class="col-6 col-md-4 col-xl">
+  {% if link %}<a href="{{ link }}" class="stat tone-{{ tone }}">{{ inner }}</a>{% else %}<div class="stat tone-{{ tone }}">{{ inner }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro page_header(eyebrow, title, subtitle='') %}
+<header class="page-head">
+  <div>
+    <div class="eyebrow">{{ eyebrow }}</div>
+    <h1>{{ title|safe }}</h1>
+    {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+  </div>
+  {% if caller %}<div class="page-actions">{{ caller() }}</div>{% endif %}
+</header>
+{% endmacro %}
+
+{% macro avatar(name, size='') %}<span class="avatar {{ size }} av-{{ name|length % 5 }}" aria-hidden="true">{{ name|initials }}</span>{% endmacro %}
+
+{% macro person(name, sub='') %}
+<div class="person">{{ avatar(name) }}<div><div class="cell-main">{{ name }}</div>{% if sub %}<div class="cell-sub">{{ sub }}</div>{% endif %}</div></div>
+{% endmacro %}
+
+{% macro empty(icon_name, title, text='') %}
+<div class="empty">{{ icon(icon_name) }}<h3>{{ title }}</h3>{% if text %}<p class="mb-0">{{ text }}</p>{% endif %}</div>
+{% endmacro %}
+
+{% macro meter(slot) %}
+{% set pct = (slot.booked / slot.capacity * 100) if slot.capacity else 0 %}
+<div class="meter" data-tip="{{ slot.booked }} booked of {{ slot.capacity }} seats">
+  <div class="meter-track"><div class="meter-fill {{ 'is-full' if slot.available_seats == 0 }}" style="--w: {{ pct|round }}%"></div></div>
+  <span class="mono">{{ slot.available_seats }} left</span>
+</div>
+{% endmacro %}
+
+{% macro stub(day) %}
+<div class="ticket-stub"><span class="day">{{ day.strftime('%d') }}</span><span class="mon">{{ day.strftime('%b') }}</span><span class="yr">{{ day.year }}</span></div>
+{% endmacro %}
+
+{# Where "today" sits inside a date window, drawn as a progress track. #}
+{% macro window(start, end) %}
+{% set total = (end - start).days or 1 %}
+{% set pct = [[((today() - start).days / total * 100), 0]|max, 100]|min %}
+<div class="window" data-tip="{{ (end - today()).days }} day(s) left in this window">
+  <div class="window-track"><div class="window-fill" style="--p: {{ pct|round }}%"></div><div class="window-now" style="--p: {{ pct|round }}%"></div></div>
+  <div class="window-dates"><span>{{ start.strftime('%d %b') }}</span><span>today</span><span>{{ end.strftime('%d %b') }}</span></div>
+</div>
+{% endmacro %}
+
+{% macro slot_time(slot) %}{{ slot.date.strftime('%d %b %Y') }}, {{ slot.start_time.strftime('%H:%M') }}-{{ slot.end_time.strftime('%H:%M') }}{% endmacro %}
+{% macro hours(slot) %}{{ slot.start_time.strftime('%H:%M') }} - {{ slot.end_time.strftime('%H:%M') }}{% endmacro %}
+
+{# Page links under a long list. Keeps the search text and other filters in the link. #}
+{% macro pager(page, request) %}
+{% if page.pages > 1 %}
+{% set args = request.args.to_dict() %}{% set _ = args.pop('page', None) %}
+<nav class="pager" aria-label="Pages">
+  <span class="small text-body-secondary">Showing {{ page.first }}–{{ page.last }} of {{ page.total }}</span>
+  <div class="d-flex flex-wrap gap-1">
+    {% if page.has_prev %}<a class="btn btn-sm btn-ghost" href="{{ url_for(request.endpoint, page=page.prev_num, **args) }}" aria-label="Previous page">{{ icon('back') }}</a>{% endif %}
+    {% for n in page.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+      {% if n %}<a class="btn btn-sm {{ 'btn-primary' if n == page.page else 'btn-ghost' }}" href="{{ url_for(request.endpoint, page=n, **args) }}" {{ 'aria-current=page' if n == page.page }}>{{ n }}</a>
+      {% else %}<span class="px-1 text-body-secondary">…</span>{% endif %}
+    {% endfor %}
+    {% if page.has_next %}<a class="btn btn-sm btn-ghost" href="{{ url_for(request.endpoint, page=page.next_num, **args) }}" aria-label="Next page">{{ icon('arrow') }}</a>{% endif %}
+  </div>
+</nav>
+{% endif %}
+{% endmacro %}

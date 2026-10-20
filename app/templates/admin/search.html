@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import badge, page_header, person, icon, empty %}
+{% block title %}Search{% endblock %}
+{% block content %}
+{{ page_header('Search', 'Results for “' ~ q ~ '”' if q else 'Search everything', 'Matches names, emails, exam and course names, or an exact ID number.') }}
+{% set total = students|length + examiners|length + exams|length + bookings|length %}
+{% if not total %}<div class="panel">{{ empty('search', 'Nothing matched', 'Try a shorter word or an ID number.') }}</div>{% endif %}
+<div class="row g-3 stagger">
+  {% for title, items, icon_name in [('Students', students, 'cap'), ('Examiners', examiners, 'users')] if items %}
+  <div class="col-lg-6"><div class="panel h-100">
+    <div class="panel-title"><h2>{{ icon(icon_name) }} {{ title }}</h2><span class="hint">{{ items|length }}</span></div>
+    {% for u in items %}<div class="list-row"><span class="cell-id">#{{ u.id }}</span><div class="grow">{{ person(u.name, u.email) }}</div></div>{% endfor %}
+  </div></div>
+  {% endfor %}
+  {% if exams %}<div class="col-lg-6"><div class="panel h-100">
+    <div class="panel-title"><h2>{{ icon('exam') }} Examinations</h2><span class="hint">{{ exams|length }}</span></div>
+    {% for e in exams %}<div class="list-row"><span class="cell-id">#{{ e.id }}</span><a class="grow cell-main text-decoration-none" href="{{ url_for('admin.exam_detail', id=e.id) }}">{{ e.name }}</a>{{ badge(e.status) }}</div>{% endfor %}
+  </div></div>{% endif %}
+  {% if bookings %}<div class="col-lg-6"><div class="panel h-100">
+    <div class="panel-title"><h2>{{ icon('ticket') }} Bookings</h2><span class="hint">{{ bookings|length }}</span></div>
+    {% for b in bookings %}<div class="list-row"><span class="cell-id">#{{ b.id }}</span><div class="grow">{{ person(b.student.name, b.exam.name) }}</div>{{ badge(b.status|capitalize) }}</div>{% endfor %}
+  </div></div>{% endif %}
+</div>
+{% endblock %}

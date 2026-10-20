@@ -1,0 +1,14 @@
+{% extends '_auth_layout.html' %}
+{% from '_macros.html' import csrf, field, icon %}
+{% block title %}Log in{% endblock %}
+{% block card %}
+<div class="eyebrow">Welcome back</div>
+<h2>Sign in to your desk</h2>
+<p class="lead-sm">Admins, examiners and students all sign in here.</p>
+<form method="post">{{ csrf() }}
+  {{ field('Email address', 'email', type='email', extra='autocomplete="email" autofocus placeholder="you@college.edu"') }}
+  {{ field('Password', 'password', type='password', extra='autocomplete="current-password" placeholder="••••••••"') }}
+  <button class="btn btn-accent w-100 py-2 mt-2">Sign in {{ icon('arrow') }}</button>
+</form>
+<p class="mt-4 mb-0 text-center text-body-secondary">New here? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import stat, badge, page_header, person, icon, empty, slot_time, stub, hours, meter %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% call page_header('Examiner desk', greeting() ~ ', <em>' ~ current_user.name ~ '</em>.', today().strftime('%A, %d %B') ~ ' · ' ~ (pending|length) ~ ' evaluation' ~ ('' if pending|length == 1 else 's') ~ ' waiting for you.') %}
+  <a class="btn btn-accent" href="{{ url_for('examiner.exams') }}">{{ icon('plus') }} Add a slot</a>
+{% endcall %}
+<div class="row g-3 mb-4 stagger">
+  {{ stat('Assigned exams', exams|length, url_for('examiner.exams'), 'exam', 'ink') }}
+  {{ stat('My slots', slots|length, url_for('examiner.slots'), 'clock', 'gold') }}
+  {{ stat('Students booked', booked, None, 'users', 'sky') }}
+  {{ stat('To evaluate', pending|length, None, 'sliders', 'accent') }}
+</div>
+<div class="row g-3">
+  <div class="col-xl-7"><div class="panel h-100">
+    <div class="panel-title"><h2>Waiting for evaluation</h2><span class="hint">Oldest first</span></div>
+    {% for b in pending %}
+      <div class="list-row">
+        <div class="grow">{{ person(b.student.name, b.exam.name ~ ' · ' ~ slot_time(b.slot)) }}</div>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('examiner.evaluate', id=b.id) }}">Evaluate {{ icon('arrow') }}</a>
+      </div>
+    {% else %}{{ empty('check', 'You are all caught up', 'New students appear here once they book your slots.') }}{% endfor %}
+  </div></div>
+  <div class="col-xl-5"><div class="panel h-100">
+    <div class="panel-title"><h2>Upcoming slots</h2><a class="small" href="{{ url_for('examiner.slots') }}">All slots</a></div>
+    <div class="d-grid gap-3">
+    {% for s in slots|selectattr('date', 'ge', today())|sort(attribute='date') %}{% if loop.index <= 3 %}
+      <a class="ticket text-decoration-none" style="color: inherit" href="{{ url_for('examiner.slot_students', id=s.id) }}">
+        {{ stub(s.date) }}
+        <div class="ticket-body"><div class="d-flex justify-content-between gap-2"><h3>{{ hours(s) }}</h3>{{ badge(s.status) }}</div>
+          <div class="ticket-meta"><span>{{ icon('exam') }} {{ s.exam.name }}</span></div><div class="ticket-foot">{{ meter(s) }}</div></div>
+      </a>
+    {% endif %}{% else %}{{ empty('calendar', 'No upcoming slots') }}{% endfor %}
+    </div>
+  </div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends '_auth_layout.html' %}
+{% from '_macros.html' import csrf, icon %}
+{% block title %}Awaiting approval{% endblock %}
+{% block card %}
+<div class="text-center">
+  <div class="empty pb-2">{{ icon('hourglass') }}</div>
+  <div class="eyebrow justify-content-center">Almost there</div>
+  <h2>Waiting for approval</h2>
+  <p class="lead-sm">Thanks, {{ current_user.name }}. Your examiner account is registered. The admin will review it, and your dashboard opens as soon as it is approved.</p>
+  <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf() }}<button class="btn btn-ghost">{{ icon('logout') }} Sign out</button></form>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{
+  "name": "Examination Management Portal",
+  "short_name": "EMP",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4eee2",
+  "theme_color": "#15213a",
+  "icons": [
+    {"src": "/static/img/favicon.svg", "sizes": "any", "type": "image/svg+xml"},
+    {"src": "/static/img/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import stat, page_header, person, post_button, badge, empty, icon %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% call page_header('Administration', greeting() ~ ', <em>' ~ current_user.name ~ '</em>.', today().strftime('%A, %d %B %Y') ~ ' · here is how the examination season looks.') %}
+  <a class="btn btn-ghost" href="{{ url_for('admin.course_form') }}">{{ icon('plus') }} Course</a>
+  <a class="btn btn-accent" href="{{ url_for('admin.exam_form') }}">{{ icon('plus') }} New examination</a>
+{% endcall %}
+
+{% set meta = {'Courses': ('admin.courses', 'book', 'ink'), 'Examinations': ('admin.exams', 'exam', 'accent'), 'Examiners': ('admin.examiners', 'users', 'sky'),
+               'Students': ('admin.students', 'cap', 'forest'), 'Slots': ('admin.slots', 'clock', 'gold'), 'Bookings': ('admin.bookings', 'ticket', 'crimson')} %}
+<div class="row g-3 mb-4 stagger">
+  {% for label, value in totals.items() %}{% set m = meta[label] %}{{ stat(label, value, url_for(m[0]), m[1], m[2]) }}{% endfor %}
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-xl-7"><div class="panel h-100">
+    <div class="panel-title"><h2>Booking activity</h2><span class="hint">Live bookings per day</span></div>
+    <div style="height: 240px"><canvas id="perDay" aria-label="Bookings per day chart" role="img"></canvas></div>
+  </div></div>
+  <div class="col-xl-5"><div class="panel h-100">
+    <div class="panel-title"><h2>Examiner workload</h2><span class="hint">Students per examiner</span></div>
+    <div style="height: 240px"><canvas id="workload" aria-label="Examiner workload chart" role="img"></canvas></div>
+  </div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-xl-5"><div class="panel h-100">
+    <div class="panel-title"><h2>Evaluation progress</h2><span class="hint">Evaluated vs waiting</span></div>
+    <div style="height: 260px"><canvas id="completion" aria-label="Evaluation progress chart" role="img"></canvas></div>
+  </div></div>
+  <div class="col-md-6 col-xl-3"><div class="panel h-100">
+    <div class="panel-title"><h2>Approvals</h2>{% if pending %}<span class="pill pill-warning pill-live"><i></i>{{ pending|length }}</span>{% endif %}</div>
+    {% for u in pending %}
+      <div class="list-row">
+        <div class="grow">{{ person(u.name, u.department) }}</div>
+        {{ post_button(url_for('admin.approve', id=u.id), '', 'ghost-success', icon_name='check', tip='Approve ' ~ u.name) }}
+      </div>
+    {% else %}{{ empty('shield', 'All clear', 'No examiner is waiting.') }}{% endfor %}
+  </div></div>
+  <div class="col-md-6 col-xl-4"><div class="panel h-100">
+    <div class="panel-title"><h2>Latest bookings</h2><a class="small" href="{{ url_for('admin.bookings') }}">View all</a></div>
+    {% for b in recent %}
+      <div class="list-row">
+        <div class="grow">{{ person(b.student.name, b.exam.name) }}</div>{{ badge(b.status|capitalize) }}
+      </div>
+    {% else %}{{ empty('ticket', 'No bookings yet') }}{% endfor %}
+  </div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.js') }}"></script>
+<script>
+  // Optional charts. Colours come from the CSS theme, so they follow light/dark mode.
+  const data = {{ charts|tojson }};
+  let charts = [];
+  function draw() {
+    charts.forEach((c) => c.destroy());
+    const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    Chart.defaults.font.family = css("--font-body");
+    Chart.defaults.color = css("--muted");
+    Chart.defaults.borderColor = css("--line-2");
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.tooltip.backgroundColor = css("--ink");
+    Chart.defaults.plugins.tooltip.titleColor = css("--paper");
+    Chart.defaults.plugins.tooltip.bodyColor = css("--paper");
+    const base = {responsive: true, maintainAspectRatio: false, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}};
+    charts = [
+      new Chart("perDay", {type: "line", options: {...base, plugins: {legend: {display: false}},
+        scales: {...base.scales, x: {ticks: {maxTicksLimit: 8, maxRotation: 0}}}},
+        data: {labels: data.per_day.labels, datasets: [{label: "Bookings", data: data.per_day.values, borderColor: css("--accent"),
+          backgroundColor: css("--accent-soft"), fill: true, tension: .35, cubicInterpolationMode: "monotone", pointRadius: 4, pointBackgroundColor: css("--accent")}]}}),
+      new Chart("workload", {type: "bar", options: {...base, indexAxis: "y", plugins: {legend: {display: false}}, scales: {x: {beginAtZero: true, ticks: {precision: 0}}}},
+        data: {labels: data.workload.labels, datasets: [{label: "Students", data: data.workload.values, backgroundColor: css("--sky"), borderRadius: 6, maxBarThickness: 26}]}}),
+      new Chart("completion", {type: "bar", options: {...base, scales: {x: {stacked: true}, y: {stacked: true, beginAtZero: true, ticks: {precision: 0}}},
+        plugins: {tooltip: {callbacks: {title: (items) => data.completion.names[items[0].dataIndex]}}}},
+        data: {labels: data.completion.labels, datasets: [
+          {label: "Evaluated", data: data.completion.evaluated, backgroundColor: css("--forest"), borderRadius: 6, maxBarThickness: 44},
+          {label: "Waiting", data: data.completion.pending, backgroundColor: css("--gold"), borderRadius: 6, maxBarThickness: 44}]}}),
+    ];
+  }
+  draw();
+  document.addEventListener("themechange", draw);
+</script>
+{% endblock %}

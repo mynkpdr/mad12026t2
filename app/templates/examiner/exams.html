@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import badge, page_header, icon, empty, window %}
+{% block title %}Assigned exams{% endblock %}
+{% block content %}
+{{ page_header('My work', 'Assigned examinations', 'You can add slots while an exam is in its slot-creation window.') }}
+<div class="row g-3 stagger">
+  {% for e in exams %}
+  <div class="col-lg-6"><div class="panel h-100 d-flex flex-column">
+    <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+      <div><div class="eyebrow">{{ e.course.code }} · {{ e.exam_type }}</div><h2 class="h4 mb-0">{{ e.name }}</h2></div>{{ badge(e.status) }}
+    </div>
+    <div class="ticket-meta mt-2"><span>{{ icon('clock') }} {{ e.duration_minutes }} min</span><span>{{ icon('award') }} {{ e.max_marks }} marks</span><span>{{ icon('sliders') }} {{ e.rubrics|length }} criteria</span></div>
+    <div class="small text-body-secondary mt-3">Slot creation window</div>
+    {{ window(e.slot_start, e.slot_end) }}
+    <div class="mt-auto">
+      {% if e.slots_open %}<a class="btn btn-accent" href="{{ url_for('examiner.slot_form', exam_id=e.id) }}">{{ icon('plus') }} Add slot</a>
+      {% else %}<span class="pill pill-neutral"><i></i>Slot creation closed</span>{% endif %}
+    </div>
+  </div></div>
+  {% else %}<div class="col-12"><div class="panel">{{ empty('exam', 'No exams assigned yet', 'The admin assigns examiners to exams.') }}</div></div>{% endfor %}
+</div>
+{% endblock %}

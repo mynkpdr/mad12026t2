@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, field, page_header, avatar, badge %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+{{ page_header('Account', 'My profile', 'Keep your details current. Your email is your login and cannot be changed here.') }}
+<div class="row g-4">
+  <div class="col-lg-4">
+    <div class="panel text-center">
+      <div class="d-flex justify-content-center mb-3">{{ avatar(current_user.name, 'avatar-lg') }}</div>
+      <h2 class="h4 mb-1">{{ current_user.name }}</h2>
+      <div class="text-body-secondary small mb-2">{{ current_user.email }}</div>
+      {{ badge('Active') }} <span class="pill pill-neutral text-capitalize"><i></i>{{ current_user.role }}</span>
+      <hr>
+      <div class="text-body-secondary small">Member since {{ current_user.created_at.strftime('%d %B %Y') }}</div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <form method="post" class="panel">{{ csrf() }}
+      <div class="form-section">Details</div>
+      {{ field('Full name', 'name', current_user.name) }}
+      <div class="row g-3">
+        <div class="col-md-7">{{ field('Department', 'department', current_user.department, required=False) }}</div>
+        <div class="col-md-5">{{ field('Phone', 'phone', current_user.phone, type='tel', required=False) }}</div>
+      </div>
+      <div class="form-section mt-2">Change password <span class="text-body-secondary small fw-normal">(optional)</span></div>
+      <div class="row g-3">
+        <div class="col-md-6">{{ field('Current password', 'current_password', type='password', required=False) }}</div>
+        <div class="col-md-6">{{ field('New password', 'new_password', type='password', required=False, extra='minlength="8"') }}</div>
+      </div>
+      <button class="btn btn-primary">Save changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

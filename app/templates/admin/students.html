@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import post_button, badge, search_bar, page_header, person, empty, pager %}
+{% block title %}Students{% endblock %}
+{% block content %}
+{{ page_header('People', 'Students', 'Everyone who registered as a student. Deactivated students cannot sign in.') }}
+{{ search_bar(q, 'Search by name, email or ID') }}
+<div class="table-wrap">
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>Student</th><th>Phone</th><th>Registered</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users.items %}
+  <tr>
+    <td class="cell-id">#{{ u.id }}</td><td>{{ person(u.name, u.email) }}</td><td class="mono small">{{ u.phone or '—' }}</td>
+    <td class="small">{{ u.created_at.strftime('%d %b %Y') }}</td><td>{{ badge('Active' if u.active else 'Deactivated') }}</td>
+    <td class="text-end">{{ post_button(url_for('admin.toggle_active', id=u.id), 'Activate' if not u.active else 'Deactivate', 'ghost' if u.active else 'ghost-success') }}</td>
+  </tr>
+  {% else %}<tr><td colspan="6">{{ empty('cap', 'No students found') }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(users, request) }}
+{% endblock %}

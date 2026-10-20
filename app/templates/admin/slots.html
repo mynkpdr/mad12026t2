@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import csrf, badge, page_header, meter, icon, empty, hours, pager %}
+{% block title %}Slots{% endblock %}
+{% block content %}
+{{ page_header('Operations', 'All examination slots', 'In an emergency, hand a slot to another approved examiner. They are added to the exam automatically.') }}
+<div class="table-wrap">
+<table class="table table-hover">
+  <thead><tr><th>ID</th><th>Examination</th><th>Date</th><th>Time</th><th>Examiner</th><th>Seats</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for s in slots.items %}
+  <tr>
+    <td class="cell-id">#{{ s.id }}</td>
+    <td><a class="cell-main text-decoration-none" href="{{ url_for('admin.exam_detail', id=s.exam_id) }}">{{ s.exam.name }}</a></td>
+    <td class="small">{{ s.date.strftime('%a, %d %b %Y') }}</td><td class="mono small">{{ hours(s) }}</td>
+    <td>
+      {% if s.cancelled %}{{ s.examiner.name }}{% else %}
+      <form method="post" action="{{ url_for('admin.slot_examiner', id=s.id) }}" class="d-flex gap-1" style="min-width: 220px">{{ csrf() }}
+        <select class="form-select form-select-sm" name="examiner_id" aria-label="Examiner for slot {{ s.id }}">
+          {% for u in examiners %}<option value="{{ u.id }}" {{ 'selected' if u.id == s.examiner_id }}>{{ u.name }}</option>{% endfor %}
+        </select><button class="btn btn-sm btn-ghost" data-tip="Change examiner" aria-label="Change examiner">{{ icon('swap') }}</button>
+      </form>{% endif %}
+    </td>
+    <td>{{ meter(s) }}</td><td>{{ badge(s.status) }}</td>
+  </tr>
+  {% else %}<tr><td colspan="7">{{ empty('clock', 'No slots yet') }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{{ pager(slots, request) }}
+{% endblock %}
