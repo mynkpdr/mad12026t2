@@ -1,0 +1,12 @@
+services:
+  web:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      DATABASE_URL: sqlite:////data/emp.db
+    volumes:
+      - emp-data:/data   # keeps the SQLite file when the container restarts
+volumes:
+  emp-data:
